@@ -1,8 +1,3 @@
-"""
-Household energy consumption forecasting with XGBoost.
-Converted from a Colab notebook — Google Drive mount replaced with a local file path.
-"""
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
