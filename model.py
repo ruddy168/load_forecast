@@ -8,11 +8,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 color_pal = sns.color_palette()
 plt.style.use('fivethirtyeight')
 
-# ---------------------------------------------------------
-# 1. Load Data
-# ---------------------------------------------------------
-# Was: /content/drive/MyDrive/dataset_colab/energy_consumption.csv
-# Point this at wherever the CSV lives on your machine.
+#load_data
 FILE_PATH = 'data/energy_consumption.csv'
 
 df = pd.read_csv(FILE_PATH, parse_dates=['timestamp'])
@@ -20,9 +16,7 @@ df = pd.read_csv(FILE_PATH, parse_dates=['timestamp'])
 df = df.sort_values(['timestamp', 'household_id']).reset_index(drop=True)
 df = df.set_index('timestamp')
 
-# ---------------------------------------------------------
-# 2. Quick Sanity Plot
-# ---------------------------------------------------------
+#plot
 sample_household = df['household_id'].iloc[0]
 df[df['household_id'] == sample_household]['consumption_kwh'].plot(
     style='.', figsize=(15, 5), color=color_pal[0],
@@ -31,9 +25,7 @@ df[df['household_id'] == sample_household]['consumption_kwh'].plot(
 plt.savefig('sample_household_plot.png')
 plt.show()
 
-# ---------------------------------------------------------
-# Cleanup / reset index
-# ---------------------------------------------------------
+
 columns_to_drop = [c for c in ['level_0', 'index'] if c in df.columns]
 if columns_to_drop:
     df = df.drop(columns=columns_to_drop)
@@ -45,9 +37,7 @@ df['timestamp'] = pd.to_datetime(df['timestamp'])
 df = df.sort_values(['household_id', 'timestamp']).reset_index(drop=True)
 
 
-# ---------------------------------------------------------
-# 3. Feature Engineering
-# ---------------------------------------------------------
+#feature_engineering
 def create_features(data):
     data = data.copy()
 
@@ -78,15 +68,11 @@ def create_features(data):
 
 df_feat = create_features(df)
 
-# Drop rows with missing values from shifting (first 168 hrs per household)
 df_clean = df_feat.dropna().reset_index(drop=True)
 
-# Categorical dtype so XGBoost handles household_id natively
 df_clean['household_id'] = df_clean['household_id'].astype('category')
 
-# ---------------------------------------------------------
-# 4. Time-Based Train/Test Split
-# ---------------------------------------------------------
+#data_split
 split_date = pd.to_datetime('2023-11-01 00:00:00')
 
 train = df_clean[df_clean['timestamp'] < split_date]
@@ -102,9 +88,7 @@ TARGET = 'consumption_kwh'
 X_train, y_train = train[FEATURES], train[TARGET]
 X_test, y_test = test[FEATURES], test[TARGET]
 
-# ---------------------------------------------------------
-# 5. Model Training
-# ---------------------------------------------------------
+#model_train
 reg = xgb.XGBRegressor(
     n_estimators=1000,
     learning_rate=0.01,
@@ -123,9 +107,7 @@ reg.fit(
     verbose=100
 )
 
-# ---------------------------------------------------------
-# 6. Evaluation
-# ---------------------------------------------------------
+#evaluation
 preds = reg.predict(X_test)
 rmse = np.sqrt(mean_squared_error(y_test, preds))
 mae = mean_absolute_error(y_test, preds)
